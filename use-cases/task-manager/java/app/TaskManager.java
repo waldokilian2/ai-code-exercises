@@ -172,4 +172,43 @@ public class TaskManager {
 
         return stats;
     }
+
+    public boolean exportTasksToCsv(String filePath) {
+        List<Task> tasks = storage.getAllTasks();
+        try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
+            // CSV Header
+            writer.append("ID,Title,Description,Priority,Status,CreatedAt,DueDate,CompletedAt,Tags\n");
+
+            // CSV Rows
+            for (Task task : tasks) {
+                writer.append(String.join(",",
+                        escapeCsv(task.getId()),
+                        escapeCsv(task.getTitle()),
+                        escapeCsv(task.getDescription()),
+                        escapeCsv(String.valueOf(task.getPriority().getValue())),
+                        escapeCsv(task.getStatus().getValue()),
+                        escapeCsv(task.getCreatedAt().toString()),
+                        escapeCsv(task.getDueDate() != null ? task.getDueDate().toString() : ""),
+                        escapeCsv(task.getCompletedAt() != null ? task.getCompletedAt().toString() : ""),
+                        escapeCsv(String.join(";", task.getTags()))
+                ));
+                writer.append("\n");
+            }
+            return true;
+        } catch (java.io.IOException e) {
+            System.err.println("Error exporting tasks to CSV: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private String escapeCsv(String data) {
+        if (data == null) {
+            return "";
+        }
+        String escapedData = data.replaceAll("\\R", " ");
+        if (data.contains(",") || data.contains("\"") || data.contains("'")) {
+            escapedData = "\"" + escapedData.replace("\"", "\"\"") + "\"";
+        }
+        return escapedData;
+    }
 }
